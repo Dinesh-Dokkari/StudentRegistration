@@ -1,0 +1,84 @@
+﻿@model IEnumerable<StudentRegistration.Models.StudentDTO>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+    <div class="col text-end pt-1">
+        <a asp-controller="Students" asp-action="Create" class="btn btn-outline-primary"><i class="bi bi-plus-square-fill"></i> Create New Registration</a>
+    </div>
+    <div class="col text-start pt-0">
+
+        @using (Html.BeginForm())
+        {
+            <p>
+                Find student by AdmissionID: @Html.TextBox("searchString")
+                <input type="submit" value="Search" />
+            </p>
+        }
+    </div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.AdmissionNo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StudentName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Address)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DateOfBirth)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SelectedCourse)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SecuredGrade)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+@*            <a asp-action="Details" asp-route-id="@item.AdmissionNo">
+*@            <td>
+                <a asp-action="Details" asp-route-id="@item.AdmissionNo">
+                @Html.DisplayFor(modelItem => item.AdmissionNo)
+                </a>
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@item.AdmissionNo">
+                @Html.DisplayFor(modelItem => item.StudentName)
+                </a>
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Address)
+            </td>
+            <td>
+                    @Html.DisplayFor(modelItem => item.DateOfBirth.Date)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SelectedCourse)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SecuredGrade)
+            </td>
+            <td>
+            
+                <a asp-action="Edit" asp-route-id="@item.AdmissionNo" class="btn btn-success"><i class="bi bi-pencil-square"></i></a> 
+                <a asp-action="Delete" asp-route-id="@item.AdmissionNo" class="btn btn-danger"><i class="bi bi-trash-fill"></i></a>
+            </td>
+        </tr>
+
+}
+    </tbody>
+</table>
+
+
