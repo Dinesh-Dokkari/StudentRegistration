@@ -1,4 +1,4 @@
-﻿@model StudentRegistration.Models.StudentDTO
+﻿@model StudentRegistration.Models.StudentUploadDto
 
 @{
     ViewData["Title"] = "Edit";
@@ -10,7 +10,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="Edit" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
           <input type="hidden" asp-for="AdmissionNo" />
 
@@ -39,6 +39,22 @@
                 <input asp-for="SecuredGrade" class="form-control" />
                 <span asp-validation-for="SecuredGrade" class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label asp-for="Image" class="control-Label"></label>
+                <div class="custom-file">
+                    <input asp-for="Image" class="form-control custom-file-input" />
+                    <label class="custom-file-label"></label>
+                </div>
+                <p class="text-danger">@ViewBag.Image</p>
+            </div>
+            <div class="form-group">
+                <label asp-for="File" class="control-Label"></label>
+                <div class="custom-file">
+                    <input asp-for="File" class="form-control custom-file-input" />
+                    <label class="custom-file-label"></label>
+                </div>
+            </div><br /><br />
+            <p class="text-danger">@ViewBag.File</p>
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>

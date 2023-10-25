@@ -5,6 +5,7 @@ using Microsoft.SqlServer.Server;
 using StudentRegistration;
 using StudentRegistration.Data;
 using System.Configuration;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,3 +39,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+

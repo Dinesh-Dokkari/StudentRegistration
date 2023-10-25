@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Delete";
+    var filepath = "~/Images/" + (Model.FilePath) ?? "noPdf.pdf";
 }
 
 <h1>Delete</h1>
@@ -30,10 +31,10 @@
             @Html.DisplayFor(model => model.Address)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateOfBirth.Date)
+            @Html.DisplayNameFor(model => model.DateOfBirth)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateOfBirth.Date)
+            @Html.DisplayFor(model => model.DateOfBirth)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.SelectedCourse)

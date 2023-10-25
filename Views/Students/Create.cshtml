@@ -1,4 +1,4 @@
-﻿@model StudentRegistration.Models.StudentDTO
+﻿@model StudentRegistration.Models.StudentUploadDto
 
 @{
     ViewData["Title"] = "Create";
@@ -9,10 +9,16 @@
 <h4>Student</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
+    <div class="col-md-5">
+        <div id="fade">
+            <div class="cv-spinner">
+                <span class="spinner"></span>
+            </div>
+        </div>
+        <form enctype="multipart/form-data" asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
+@*            <input asp-for="AdmissionNo" type="hidden"/>
+*@            <div class="form-group">
                 <label asp-for="StudentName" class="control-label"></label>
                 <input asp-for="StudentName" class="form-control" />
                 <span asp-validation-for="StudentName" class="text-danger"></span>
@@ -23,14 +29,9 @@
                 <span asp-validation-for="Address" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="DateOfBirth.Date" class="control-label"></label>
-                <input asp-for="DateOfBirth.Date" class="form-control" />
+                <label asp-for="DateOfBirth" class="control-label"></label>
+                <input asp-for="DateOfBirth" class="form-control" min="1980-01-01" max="@ViewBag.Date"/>
                 <span asp-validation-for="DateOfBirth" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="SelectedCourse" class="control-label"></label>
-                <input asp-for="SelectedCourse" class="form-control" />
-                <span asp-validation-for="SelectedCourse" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="SecuredGrade" class="control-label"></label>
@@ -38,8 +39,36 @@
                 <span asp-validation-for="SecuredGrade" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <label asp-for="SelectedCourse" class="control-label"></label>
+                <input asp-for="SelectedCourse" class="form-control" />
+                <span asp-validation-for="SelectedCourse" class="text-danger"></span>
+            </div><br />
+            <div class="form-group">
+                <label asp-for="Image" class="control-Label"></label>
+                <div class="custom-file">
+                    <input asp-for="Image" class="form-control custom-file-input" />
+                    <label class="custom-file-label"></label>
+                </div>
+                <p class="text-danger">@ViewBag.Image</p>
             </div>
+            <div class="form-group">
+                <label asp-for="File" class="control-Label"></label>
+                <div class="custom-file">
+                    <input asp-for="File" class="form-control custom-file-input" />
+                    <label class="custom-file-label"></label>
+                </div>
+            </div><br />
+            <p class="text-danger">@ViewBag.File</p>
+
+            <div class="form-group">
+                <input id="button" type="submit" value="Create" class="btn btn-primary " />
+            </div>
+
+@*            <button id="button" type="button">Click</button>
+*@
+
+
+
         </form>
     </div>
 </div>
@@ -48,6 +77,46 @@
     <a asp-action="Index">Back to List</a>
 </div>
 
+@*@section Scripts {
+    <script>
+        //$(document).ready(function(){
+        //    $('.custom-file-input').on("change",function(){
+        //        var fileName =$(this).val().split("\\").pop();
+        //        $(this).next('.custom-file-label').html(fileName);
+        //    });
+        //})
+
+        //$(document).ready(function () {
+        //    $('.custom-file-input2').on("change", function () {
+        //        var fileName2 = $(this).val().split("\\").pop();
+        //        $(this).next('.custom-file-label2').html(fileName);
+        //    });
+        //})
+    </script>
+
+}*@
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        jQuery(function ($) {
+            $(document).ajaxSend(function () {
+                $("#fade").fadeIn(500);
+            });
+
+            $('#button').click(function () {
+                $.ajax({
+                    type: 'GET',
+                    success: function () {
+                        //alert("Student Created")
+                    }
+                }).done(function () {
+                    setTimeout(function () {
+                        $("#fade").fadeOut(500);
+                    }, 500);
+                });
+            });
+        });
+    </script>
 }

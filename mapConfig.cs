@@ -9,6 +9,8 @@ namespace StudentRegistration
         public mapConfig()
         {
             CreateMap<StudentDTO,Student>().ReverseMap();
+            CreateMap<StudentDTO,StudentUploadDto>().ReverseMap();
+            CreateMap<StudentUploadDto,StudentDTO>().ReverseMap();
             //CreateMap<StudentDto,Student>().ReverseMap();
             
         }

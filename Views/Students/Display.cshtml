@@ -1,0 +1,16 @@
+﻿@model StudentRegistration.Models.StudentDTO
+@{
+    var filepath = "~/Files/" + (Model.FilePath ??"noPdf.pdf");
+
+}
+
+<div class="ViewPdf" style="height:800px"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.12/pdfobject.min.js" integrity="sha512-lDL6DD6x4foKuSTkRUKIMQJAoisDeojVPXknggl4fZWMr2/M/hMiKLs6sqUvxP/T2zXdrDMbLJ0/ru8QSZrnoQ==" @*crossorigin="anonymous"*@ referrerpolicy="no-referrer"></script>
+<script type="text/javascript">
+    if(PDFObject.supportsPDFs){
+        PDFObject.embed("filepath", ".ViewPdf")
+    }else{
+        alert("This browser not support PDFObject");
+    }
+
+</script>

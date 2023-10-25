@@ -1,10 +1,24 @@
-﻿@model IEnumerable<StudentRegistration.Models.StudentDTO>
+﻿﻿
+@model IEnumerable<StudentRegistration.Models.StudentDTO>
 
 @{
     ViewData["Title"] = "Index";
+
+    Pager pager = new Pager();
+
+    int pageNo = 0;
+
+    if(ViewBag.Pager != null)
+    {
+        pager = ViewBag.Pager;
+        pageNo = pager.CurrentPage;
+    }
 }
 
 <h1>Index</h1>
+
+<p class="text-bg-success">@ViewBag.Uploaded</p>
+
 
     <div class="col text-end pt-1">
         <a asp-controller="Students" asp-action="Create" class="btn btn-outline-primary"><i class="bi bi-plus-square-fill"></i> Create New Registration</a>
@@ -17,8 +31,14 @@
                 Find student by AdmissionID: @Html.TextBox("searchString")
                 <input type="submit" value="Search" />
             </p>
+            
         }
     </div>
+
+<p class="text-danger">@ViewBag.Search</p>
+<p class="text-danger">@ViewBag.notfound</p>
+
+
 
 <table class="table">
     <thead>
@@ -62,7 +82,7 @@
                 @Html.DisplayFor(modelItem => item.Address)
             </td>
             <td>
-                    @Html.DisplayFor(modelItem => item.DateOfBirth.Date)
+                    @Html.DisplayFor(modelItem => item.DateOfBirth)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.SelectedCourse)
@@ -81,4 +101,69 @@
     </tbody>
 </table>
 
+
+<div class="container">
+    @if (pager.TotalPages > 0)
+
+    {
+
+        <ul class="pagination justify-content-end">
+
+            @if (pager.CurrentPage > 1)
+
+            {
+
+                <li class="page-item ">
+
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="1">First</a>
+
+                </li>
+
+                <li class="page-item">
+
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.CurrentPage-1)">&lt;</a>
+
+                </li>
+
+            }
+
+            @for (var pageValue = pager.StartPage; pageValue <= pager.EndPage; pageValue++)
+
+            {
+
+                <li class="page-item @(pageValue== pager.CurrentPage? "active":"")">
+
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@pageValue">@pageValue</a>
+
+                </li>
+
+            }
+
+            @if (pager.CurrentPage < pager.TotalPages)
+
+            {
+
+                <li class="page-item ">
+
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.CurrentPage+1)">&gt;</a>
+
+                </li>
+
+                <li class="page-item">
+
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.TotalPages)">Last</a>
+
+                </li>
+
+            }
+
+        </ul>
+
+    }
+
+
+    
+
+
+</div>
 
