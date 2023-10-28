@@ -6,8 +6,7 @@ namespace StudentRegistration.Models
     public class StudentUploadDto
     {
 
-        [Key]
-        public int AdmissionNo { get; set; }
+
         [Required(ErrorMessage = "Please enter name"), MaxLength(30)]
         [Display(Name = "Student Name")]
         public string StudentName { get; set; } = null!;
@@ -30,9 +29,9 @@ namespace StudentRegistration.Models
         [Range(75, 100, ErrorMessage = "Grade Must be above 75% to register")]
         public string SecuredGrade { get; set; } = null!;
 
-        public IFormFile Image { get; set; }
+        public IFormFile? Image { get; set; }
 
-        public IFormFile File { get; set; }
+        public IFormFile? File { get; set; }
     }
 }
 

@@ -1,11 +1,14 @@
 ﻿﻿
 @model IEnumerable<StudentRegistration.Models.StudentDTO>
 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
 @{
     ViewData["Title"] = "Index";
 
-    Pager pager = new Pager();
+    Paging pager = new Paging();
 
+    
     int pageNo = 0;
 
     if(ViewBag.Pager != null)
@@ -28,7 +31,7 @@
         @using (Html.BeginForm())
         {
             <p>
-                Find student by AdmissionID: @Html.TextBox("searchString")
+                Search in the Grid : @Html.TextBox("searchString")
                 <input type="submit" value="Search" />
             </p>
             
@@ -44,13 +47,18 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.AdmissionNo)
+                Select
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.StudentName)
+                S.No
+            </th>
+
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]" asp-route-searchString="@ViewBag.Search" asp-route-pagesizeinput="@ViewBag.pagesize">@Html.DisplayNameFor(model => model.StudentName)</a>
+
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Address)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["AddressSortParm"]">@Html.DisplayNameFor(model => model.Address)</a>
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.DateOfBirth)
@@ -61,22 +69,26 @@
             <th>
                 @Html.DisplayNameFor(model => model.SecuredGrade)
             </th>
-            <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-@*            <a asp-action="Details" asp-route-id="@item.AdmissionNo">
-*@            <td>
-                <a asp-action="Details" asp-route-id="@item.AdmissionNo">
-                @Html.DisplayFor(modelItem => item.AdmissionNo)
-                </a>
+        @{
+            int i = (1 + (pager.PageSize * (pager.CurrentPage-1)));
+            @foreach (var item in Model) {
+            
+            <tr>
+
+            <td>
+                <input type="checkbox" id="StudentsToDelete" value="@item.AdmissionNo" />
+            </td>
+            <td>
+                @i
             </td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.AdmissionNo">
                 @Html.DisplayFor(modelItem => item.StudentName)
                 </a>
+
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Address)
@@ -92,78 +104,116 @@
             </td>
             <td>
             
-                <a asp-action="Edit" asp-route-id="@item.AdmissionNo" class="btn btn-success"><i class="bi bi-pencil-square"></i></a> 
-                <a asp-action="Delete" asp-route-id="@item.AdmissionNo" class="btn btn-danger"><i class="bi bi-trash-fill"></i></a>
+                <a asp-action="Edit" asp-route-id="@item.AdmissionNo">Edit</a>|
+                    <a>
+                        @Html.ActionLink("Delete", "Delete", new { id = item.AdmissionNo },
+                    new { onclick = "return confirm('Are sure wants to delete?');" })
+                    </a>
             </td>
-        </tr>
+            </tr>
+            i = i + 1;
+
+        }
 
 }
     </tbody>
 </table>
 
+<input type="submit" value="Delete selected" id="DeleteSelected" />
+
+
+<br/>
+<div class="pagination justify-content-lg-start">
+
+    @using (Html.BeginForm())
+    {
+        <p>
+            <label>Enter Page Size:</label>
+            <select  name="pagesizeinput">
+                <option value="" selected disabled>@ViewBag.pagesize</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+            </select>
+           <input type="submit" value="Enter" />
+           <label>
+                @if (@ViewBag.pagesize < @pager.TotalItems)
+                {
+                    <label>Showing @((pager.PageSize * (pager.CurrentPage - 1)) + 1) to @((((pager.PageSize * (pager.CurrentPage - 1)) + 1) + (pager.PageSize-1)) >= pager.TotalItems ? (pager.TotalItems) : ((pager.PageSize * (pager.CurrentPage - 1)) + 1) + (pager.PageSize-1)) out of @pager.TotalItems</label>
+
+                }
+                else
+                {
+                    <label>Showing @pager.TotalItems out of @pager.TotalItems</label>
+
+                }
+           </label>          
+        </p>
+
+    }
+</div>
 
 <div class="container">
     @if (pager.TotalPages > 0)
-
     {
-
         <ul class="pagination justify-content-end">
-
             @if (pager.CurrentPage > 1)
-
             {
-
                 <li class="page-item ">
-
-                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="1">First</a>
-
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="1" asp-route-pagesizeinput="@ViewBag.pagesize">First</a>
                 </li>
-
                 <li class="page-item">
-
-                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.CurrentPage-1)">&lt;</a>
-
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.CurrentPage-1)" asp-route-pagesizeinput="@ViewBag.pagesize">&lt;</a>
                 </li>
-
             }
-
             @for (var pageValue = pager.StartPage; pageValue <= pager.EndPage; pageValue++)
-
             {
-
                 <li class="page-item @(pageValue== pager.CurrentPage? "active":"")">
-
-                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@pageValue">@pageValue</a>
-
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@pageValue" asp-route-pagesizeinput="@ViewBag.pagesize">@pageValue</a>
                 </li>
-
             }
 
             @if (pager.CurrentPage < pager.TotalPages)
-
             {
-
                 <li class="page-item ">
-
-                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.CurrentPage+1)">&gt;</a>
-
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.CurrentPage+1)" asp-route-pagesizeinput="@ViewBag.pagesize">&gt;</a>
                 </li>
-
                 <li class="page-item">
-
-                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.TotalPages)">Last</a>
-
+                    <a class="page-link" asp-controller="Students" asp-action="Index" asp-route-pg="@(pager.TotalPages)" asp-route-pagesizeinput="@ViewBag.pagesize">Last</a>
                 </li>
-
             }
-
         </ul>
-
     }
-
-
-    
-
-
 </div>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+<script type="text/javascript">
+    $(document).ready(function(){
+            $("#DeleteSelected").click(function () {
+                var formdata = new FormData();
+                formdata.append("selectedStudents", $("StudentsToDelete").val());
+                
+                $.ajax({
+                    type:'POST',
+                    url: '@Url.Action("DeleteMultiple","Students")',
+                    processData:false,
+                    contentType:false,
+                    data:formdata,
+                    success:function(result){
+                        alert($("StudentsToDelete").val());
+                    }
+
+                });
+            
+
+            });
+    });
+
+    </script>
+}
 

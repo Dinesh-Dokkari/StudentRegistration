@@ -11,6 +11,8 @@ namespace StudentRegistration.Models;
 public partial class StudentDTO
 {
     [Key]
+    [Display(Name = "Admission Number")]
+
     public int AdmissionNo { get; set; }
 
     [Required(ErrorMessage = "Please enter name"), MaxLength(30)]
@@ -23,7 +25,9 @@ public partial class StudentDTO
     [Required(ErrorMessage = "Please enter DOB")]
     [Display(Name = "Date of Birth")]
     [DataType(DataType.Date)]
-    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = false)]
+    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}")]
+    [Range(typeof(DateTime), "01/01/2000", "01/01/2010",
+        ErrorMessage = "Value for {0} must be between {1} and {2}")]
     public DateTime DateOfBirth { get; set; }
 
     [Required(ErrorMessage = "Please enter Selected Course")]
@@ -36,7 +40,7 @@ public partial class StudentDTO
 
     public string SecuredGrade { get; set; } = null!;
 
-    public string ImagePath { get; set; }
+    public string? ImagePath { get; set; }
 
-    public string FilePath { get; set; }
+    public string? FilePath { get; set; }
 }

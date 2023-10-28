@@ -1,6 +1,6 @@
 ﻿namespace StudentRegistration.Models
 {
-    public class Pager
+    public class Paging
     {
         public int TotalItems { get; set; }
         public int  CurrentPage{ get; set; }
@@ -10,19 +10,19 @@
         public int EndPage { get; set; }
 
         
-        public Pager()
+        public Paging()
         {
 
         }
 
-        public Pager(int totalItems,int page,int pageSize = 10)
+        public Paging(int totalItems,int page,int pageSize = 5)
         {
             int totalPages = (int)Math.Ceiling((decimal)totalItems/(decimal)pageSize);
 
             int currentPage = page;
 
-            int startPage = currentPage - 5;
-            int endPage = currentPage +4 ;
+            int startPage = currentPage - 3;
+            int endPage = currentPage + 2;
 
             if (startPage <= 0)
             {

@@ -23,6 +23,7 @@ using iText.Layout.Element;
 using iText.Layout.Properties;
 using iText.Kernel.Pdf.Canvas.Draw;
 using iText.IO.Image;
+using System.IO;
 
 namespace StudentRegistration.Controllers
 {
@@ -40,54 +41,63 @@ namespace StudentRegistration.Controllers
             _environment = Environment;
         }
 
-        // GET: Students
-        public async Task<IActionResult> Index(string searchString ,int pg=1)
+        public async Task<IActionResult> Index(string searchString ,string sortOrder,int pagesizeinput=5, int pg = 1)
         {
-            //if (isUploaded)
-            //{
-            //    ViewBag.Uploaded = "Student Uploaded Successfully";
-            //}
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "Name_desc" : "";
+            ViewData["AddressSortParm"] = sortOrder == "Address" ? "Address_desc" : "Address";
+
+            ViewBag.pagesize=pagesizeinput;
             try
             {
                 var Students = await _service.GetAll();
 
                 if (!String.IsNullOrEmpty(searchString) && int.TryParse(searchString, out int i))
-                {   
-
-                    Students = Students.Where(s=>s.AdmissionNo == i);
+                {
+                    Students = Students.Where(s => s.AdmissionNo == i);
                     if (Students.Count() == 0)
                     {
                         ViewBag.notfound = "Admission Number " + i + " Not Found";
-
                     }
                 }
-                else if(!String.IsNullOrEmpty(searchString))
-                {
-                    ViewBag.Search = "Please Enter a valid Admission Number to get Student Data";
 
+                else if (!String.IsNullOrEmpty(searchString))
+                {
+                    searchString=searchString.ToLower();
+
+                    Students = Students.Where(s=>s.StudentName.ToLower().Contains(searchString) ||
+                                s.Address.ToLower().Contains(searchString) || s.SelectedCourse.ToLower().Contains(searchString) ||
+                                s.DateOfBirth.ToString().Contains(searchString));
+                    if (Students.Count() == 0)
+                    {
+                        ViewBag.notfound = "Please enter valid information";
+                    }
                 }
+
+                switch (sortOrder)
+                {
+                    case "Name_desc":
+                        Students = Students.OrderByDescending(s => s.StudentName);
+                        break;
+                    case "Address":
+                        Students = Students.OrderBy(s => s.Address);
+                        break;
+                    case "Address_desc":
+                        Students = Students.OrderByDescending(s => s.Address);
+                        break;
+                    default:
+                        Students = Students.OrderBy(s => s.StudentName);
+                        break;
+                }
+
 
                 if (Students != null)
                 {
                     var StudentsDTO = _map.Map<IEnumerable<StudentDTO>>(Students);
-
-
-                    const int pageSize = 5;
-                    if (pg < 1)
-                    {
-                        pg = 1;
-                    }
-
-                    int recsCount = StudentsDTO.Count();
-
-                    var pager = new Pager(recsCount, pg, pageSize);
-
-                    int recSkip = (pg - 1) * pageSize;
-
-                    var data = StudentsDTO.Skip(recSkip).Take(pager.PageSize).ToList();
-
-                    this.ViewBag.Pager = pager;
-
+                    int recordCount = StudentsDTO.Count();
+                    var paging = new Paging(recordCount, pg, pagesizeinput);
+                    int recSkip = (pg - 1) * pagesizeinput;
+                    var data = StudentsDTO.Skip(recSkip).Take(paging.PageSize).ToList();
+                    this.ViewBag.Pager = paging;
                     return View(data);
                 }
                 else
@@ -104,9 +114,6 @@ namespace StudentRegistration.Controllers
             }
         }
 
-
-
-        // GET: Students/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             try
@@ -133,21 +140,17 @@ namespace StudentRegistration.Controllers
             }
         }
 
-        // GET: Students/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Students/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(StudentUploadDto student)
         {
             var now = DateTime.Now;
-            ViewBag.Date=now;
+            ViewBag.Date=now.Date;
 
 
             if (ModelState.IsValid)
@@ -197,7 +200,6 @@ namespace StudentRegistration.Controllers
 
                     StudentDTO studentDTO = new StudentDTO
                     {
-                        AdmissionNo = student.AdmissionNo,
                         StudentName = student.StudentName,
                         Address = student.Address,
                         DateOfBirth = student.DateOfBirth,
@@ -217,104 +219,130 @@ namespace StudentRegistration.Controllers
 
         }
 
-        // GET: Students/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            try
-            {
-                var student = await _service.GetAll();
+            var student = await _service.Edit(id);
 
-                if (id == null || student.Count() == 0)
-                {
-                    return NotFound();
-                }
-                var Stu = await _service.Edit(id);
-                var StudentDTO = _map.Map<StudentDTO>(Stu);
-                var StudentUploaddto = _map.Map<StudentUploadDto>(StudentDTO);
-                if (StudentUploaddto == null)
-                {
-                    return NotFound();
-                }
-                return View(StudentUploaddto);
-
-            }
-            catch (Exception e)
+            StudentEditDto studentEditModel = new StudentEditDto
             {
-                Console.WriteLine(e.Message);
-                return NotFound();
+                AdmissionNo = student.AdmissionNo,
+                StudentName = student.StudentName,
+                Address = student.Address,
+                DateOfBirth = student.DateOfBirth,
+                SelectedCourse = student.SelectedCourse,
+                SecuredGrade = student.SecuredGrade,
+                ExistingImagePath = student.ImagePath,
+                ExistingFilePath = student.FilePath
+
+            };
+            if (student.ImagePath != null && student.FilePath != null)
+            {
+
+                String str1 = student.ImagePath;
+                String str2 = student.FilePath;
+                String[] strlist = str1.Split("_");
+                ViewBag.ImagePath = strlist[1];
+
+                String[] strlist2 = str2.Split("_");
+                ViewBag.FilePath = strlist2[1];
             }
+
+            return View(studentEditModel);
+
         }
-
-        // POST: Students/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id,StudentUploadDto student)
+        public async Task<IActionResult> Edit(int id, StudentEditDto model)
         {
-            if (id != student.AdmissionNo)
-            {
-                return NotFound();
-            }
-            if (ModelState.IsValid == false)
+
+            if (ModelState.IsValid)
             {
                 try
                 {
-                    string uniqueImageName = null;
-                    string uniqueFileName = null;
+                    var student = await _service.Edit(id);
+                    student.AdmissionNo = model.AdmissionNo;
+                    student.StudentName = model.StudentName;
+                    student.Address = model.Address;
+                    student.SelectedCourse = model.SelectedCourse;
+                    student.SecuredGrade = model.SecuredGrade;
 
-                    if (student.Image != null)
+                    string uniqueImageName = null;
+
+                    if (model.Image != null)
                     {
                         string uploadfolder = Path.Combine(_environment.WebRootPath, "Images");
-                        uniqueImageName = Guid.NewGuid().ToString() + "_" + student.Image.FileName;
+                        uniqueImageName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
 
                         var extension = Path.GetExtension(uniqueImageName);
 
                         if (extension.ToLower().Equals(".png") || extension.ToLower().Equals(".jpg")
                             || extension.ToLower().Equals(".jpeg"))
                         {
+                            if ((model.Image != null) || (student.ImagePath != model.ExistingImagePath))
+                            {
+                                if (model.ExistingImagePath != null)
+                                {
+                                    string filePath = Path.Combine(_environment.WebRootPath,
+                                        "Images", model.ExistingImagePath);
+                                    System.IO.File.Delete(filePath);
+                                }
+                            }
 
                             string filepath = Path.Combine(uploadfolder, uniqueImageName);
-                            student.Image.CopyTo(new FileStream(filepath, FileMode.Create));
+                            using (var fileStream = new FileStream(filepath, FileMode.Create))
+                            {
+                                model.Image.CopyTo(fileStream);
+                            }
+
+                            student.ImagePath = uniqueImageName;
+
                         }
                         else
                         {
                             ViewBag.Image = "Please Upload .png ,.jpg,.jpeg formats only!!";
+                            student.ImagePath = model.ExistingImagePath;
                         }
                     }
-                    if (student.File != null)
+
+                    string uniqueFileName = null;
+
+                    if (model.File != null)
                     {
                         string uploadfolder = Path.Combine(_environment.WebRootPath, "Files");
-                        uniqueFileName = Guid.NewGuid().ToString() + "_" + student.File.FileName;
+                        uniqueFileName = Guid.NewGuid().ToString() + "_" + model.File.FileName;
 
                         var extension = Path.GetExtension(uniqueFileName);
 
                         if (extension.ToLower().Equals(".pdf"))
                         {
+                            if (student.FilePath != model.ExistingFilePath || model.File != null)
+                            {
+                                if (model.ExistingFilePath != null)
+                                {
+                                    string filePath = Path.Combine(_environment.WebRootPath,
+                                        "Files", model.ExistingFilePath);
+                                    System.IO.File.Delete(filePath);
+                                }
+                            }
                             string filepath = Path.Combine(uploadfolder, uniqueFileName);
-                            student.File.CopyTo(new FileStream(filepath, FileMode.Create));
+                            using (var fileStream = new FileStream(filepath, FileMode.Create))
+                            {
+                                model.File.CopyTo(fileStream);
+                            }
+
+                            student.FilePath = uniqueFileName;
+
                         }
                         else
                         {
                             ViewBag.File = "Please Upload .pdf format only!!";
-                            return View(student);
+                            student.FilePath = model.ExistingFilePath;
+
+                            return View(model);
                         }
                     }
-                    StudentDTO studentDTO = new StudentDTO
-                    {
-                        AdmissionNo = student.AdmissionNo,
-                        StudentName = student.StudentName,
-                        Address = student.Address,
-                        DateOfBirth = student.DateOfBirth,
-                        SelectedCourse = student.SelectedCourse,
-                        SecuredGrade = student.SecuredGrade,
-                        ImagePath = uniqueImageName,
-                        FilePath = uniqueFileName
-                    };
+                    int result = await _service.Edit(id,student);
 
-                    var newstudent = _map.Map<Student>(studentDTO);
-
-                    int result = await _service.Edit(id, newstudent);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -323,28 +351,22 @@ namespace StudentRegistration.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(student);
+            return View();
         }
 
-        //GET: Students/Delete/5
+
         public async Task<IActionResult> Delete(int? id)
         {
             try
             {
-                var students = await _service.GetAll();
-
-
-                if (id == null || students.Count() == 0)
-                {
-                    return NotFound();
-                }
                 var student = await _service.Delete(id, new List<string>(),a => a.AdmissionNo == id);
                 if (student == null)
                 {
                     return NotFound();
                 }
-                var studentDTO = _map.Map<StudentDTO>(student);
-                return View(studentDTO);
+                int result = await _service.DeleteConfirmed(id);
+
+                return RedirectToAction(nameof(Index));
             }
             catch (Exception e)
             {
@@ -354,29 +376,20 @@ namespace StudentRegistration.Controllers
 
         }
 
-        //POST: Students/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        [HttpPost]
+        public async Task<ActionResult> DeleteMultiple(IFormCollection formCollection)
         {
-            try
+
+
+            string[] ids = formCollection["selectedStudents"];
+
+            foreach (string id in ids)
             {
-                var students = await _service.GetAll();
+                var student = await _service.DeleteConfirmed(int.Parse(id));
 
 
-
-                if (students.Count() == 0)
-                {
-                    return Problem("Entity set Students is null.");
-                }
-                int result = await _service.DeleteConfirmed(id);
-            return RedirectToAction(nameof(Index));
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return NotFound();
-            }
+            return RedirectToAction("Index");
         }
 
         public async Task<IActionResult> DownloadPDF(int id )
@@ -433,15 +446,56 @@ namespace StudentRegistration.Controllers
             byte[] pdfBytes = memoryStream.ToArray();
             System.IO.File.WriteAllBytes($"{model.StudentName}" + ".pdf", pdfBytes);
 
-            return File(pdfBytes, "application/pdf", $"{model.StudentName}"+".pdf");
-
-
-
+            return File(pdfBytes, "application/pdf", $"{model.StudentName}"+"Details.pdf");
 
         }
-        //private bool StudentExists(int id)
-        //{
-        //    return (_context.Students?.Any(e => e.AdmissionNo == id)).GetValueOrDefault();
-        //}
+
+        public async Task<IActionResult> DownloadFile(int id)
+        {
+            var student = await _service.Edit(id);
+
+            var path = Path.Combine(_environment.WebRootPath, "Images",student.FilePath);
+            var memory = new MemoryStream();
+
+            if (System.IO.File.Exists(path))
+            {
+                var net = new System.Net.WebClient();
+                var data = net.DownloadData(path);
+                var content = new System.IO.MemoryStream(data);
+                memory = content;
+
+            }
+            memory.Position = 0;
+            String str = student.FilePath;
+            String[] strlist = str.Split("_");
+
+
+            return File(memory.ToArray(), "application/pdf", $"{strlist[1]}"+".pdf");
+        }
+
+        public async Task<IActionResult> DownloadImageFile(int id)
+        {
+            var student = await _service.Edit(id);
+
+            var path = Path.Combine(_environment.WebRootPath, "Images", student.ImagePath);
+            var memory = new MemoryStream();
+
+            if (System.IO.File.Exists(path))
+            {
+                var net = new System.Net.WebClient();
+                var data = net.DownloadData(path);
+                var content = new System.IO.MemoryStream(data);
+                memory = content;
+
+            }
+            memory.Position = 0;
+            String str = student.ImagePath;
+            String[] strlist = str.Split("_");
+
+
+            return File(memory.ToArray(), "image/png", $"{strlist[1]}" + ".png");
+        }
+
+
     }
 }
