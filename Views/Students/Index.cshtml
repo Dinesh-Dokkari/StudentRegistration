@@ -2,6 +2,21 @@
 @model IEnumerable<StudentRegistration.Models.StudentDTO>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#checkAll").click(function () {
+            if($(this).is(":checked"))
+                $('.StudentsToDelete').prop('checked', true);
+            else
+                $('.StudentsToDelete').prop('checked', false);
+
+        });
+    });
+
+</script>
+
+
+<i class="bi bi-arrows-vertical"></i>
 
 @{
     ViewData["Title"] = "Index";
@@ -43,22 +58,33 @@
 
 
 
-<table class="table">
+@using (Html.BeginForm("DeleteMultiple", "Students", FormMethod.Post))
+{
+    
+
+    <table class="table table-striped" id="table">
     <thead>
         <tr>
             <th>
-                Select
+                <input type="checkbox" id="checkAll"/> Select
             </th>
             <th>
                 S.No
             </th>
 
             <th>
-                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]" asp-route-searchString="@ViewBag.Search" asp-route-pagesizeinput="@ViewBag.pagesize">@Html.DisplayNameFor(model => model.StudentName)</a>
+                    @Html.DisplayNameFor(model => model.StudentName)<a style="text-decoration:none" asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]" asp-route-searchString="@ViewBag.Search" asp-route-pagesizeinput="@ViewBag.pagesize">
+
+                        <i class="bi bi-arrow-down-up"></i>
+
+                    </a>
 
             </th>
             <th>
-                <a asp-action="Index" asp-route-sortOrder="@ViewData["AddressSortParm"]">@Html.DisplayNameFor(model => model.Address)</a>
+                    @Html.DisplayNameFor(model => model.Address)
+                    <a style="text-decoration:none" asp-action="Index" asp-route-sortOrder="@ViewData["AddressSortParm"]">
+                    <i class="bi bi-arrow-down-up"></i>
+                    </a>
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.DateOfBirth)
@@ -74,12 +100,12 @@
     <tbody>
         @{
             int i = (1 + (pager.PageSize * (pager.CurrentPage-1)));
-            @foreach (var item in Model) {
+  @foreach (var item in Model) {
             
             <tr>
 
             <td>
-                <input type="checkbox" id="StudentsToDelete" value="@item.AdmissionNo" />
+                    <input type="checkbox" class="StudentsToDelete" name="studentId" value="@item.AdmissionNo" />
             </td>
             <td>
                 @i
@@ -107,7 +133,7 @@
                 <a asp-action="Edit" asp-route-id="@item.AdmissionNo">Edit</a>|
                     <a>
                         @Html.ActionLink("Delete", "Delete", new { id = item.AdmissionNo },
-                    new { onclick = "return confirm('Are sure wants to delete?');" })
+                    new { onclick = $"return confirm('Are you sure to delete {@item.StudentName}?')",@item.StudentName})
                     </a>
             </td>
             </tr>
@@ -115,45 +141,15 @@
 
         }
 
-}
+    }
     </tbody>
-</table>
-
-<input type="submit" value="Delete selected" id="DeleteSelected" />
-
+    </table>
 
 <br/>
-<div class="pagination justify-content-lg-start">
 
-    @using (Html.BeginForm())
-    {
-        <p>
-            <label>Enter Page Size:</label>
-            <select  name="pagesizeinput">
-                <option value="" selected disabled>@ViewBag.pagesize</option>
-                <option value="3">3</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-            </select>
-           <input type="submit" value="Enter" />
-           <label>
-                @if (@ViewBag.pagesize < @pager.TotalItems)
-                {
-                    <label>Showing @((pager.PageSize * (pager.CurrentPage - 1)) + 1) to @((((pager.PageSize * (pager.CurrentPage - 1)) + 1) + (pager.PageSize-1)) >= pager.TotalItems ? (pager.TotalItems) : ((pager.PageSize * (pager.CurrentPage - 1)) + 1) + (pager.PageSize-1)) out of @pager.TotalItems</label>
+    <input type="submit" value="Delete selected" onclick=" return confirm('Are you sure to delete multiple records')" />
 
-                }
-                else
-                {
-                    <label>Showing @pager.TotalItems out of @pager.TotalItems</label>
-
-                }
-           </label>          
-        </p>
-
-    }
-</div>
-
+}
 <div class="container">
     @if (pager.TotalPages > 0)
     {
@@ -186,34 +182,42 @@
         </ul>
     }
 </div>
+<div class="pagination justify-content-lg-start">
+
+    @using (Html.BeginForm())
+    {
+        <p>
+            <label>Enter Page Size:</label>
+            <select  name="pagesizeinput">
+                <option value="" selected disabled>@ViewBag.pagesize</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+            </select>
+           <input type="submit" value="Enter" />
+           <label>
+                @if (@ViewBag.pagesize < @pager.TotalItems)
+                {
+                    <label>Showing @((pager.PageSize * (pager.CurrentPage - 1)) + 1) to @((((pager.PageSize * (pager.CurrentPage - 1)) + 1) + (pager.PageSize-1)) >= pager.TotalItems ? (pager.TotalItems) : ((pager.PageSize * (pager.CurrentPage - 1)) + 1) + (pager.PageSize-1)) out of @pager.TotalItems</label>
+
+                }
+                else
+                {
+                    <label>Showing @pager.TotalItems out of @pager.TotalItems</label>
+
+                }
+           </label>          
+        </p>
+
+    }
+</div>
+
 
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-<script type="text/javascript">
-    $(document).ready(function(){
-            $("#DeleteSelected").click(function () {
-                var formdata = new FormData();
-                formdata.append("selectedStudents", $("StudentsToDelete").val());
-                
-                $.ajax({
-                    type:'POST',
-                    url: '@Url.Action("DeleteMultiple","Students")',
-                    processData:false,
-                    contentType:false,
-                    data:formdata,
-                    success:function(result){
-                        alert($("StudentsToDelete").val());
-                    }
-
-                });
-            
-
-            });
-    });
-
-    </script>
+        
 }
-

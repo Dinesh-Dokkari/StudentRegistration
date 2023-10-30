@@ -45,66 +45,94 @@ namespace StudentRegistration.Controllers
         {
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "Name_desc" : "";
             ViewData["AddressSortParm"] = sortOrder == "Address" ? "Address_desc" : "Address";
-
+            IEnumerable<Student> data = null; 
             ViewBag.pagesize=pagesizeinput;
             try
             {
-                var Students = await _service.GetAll();
-
-                if (!String.IsNullOrEmpty(searchString) && int.TryParse(searchString, out int i))
+                int studentsCount = await _service.GetDataCount();
+                if (studentsCount > 0)
                 {
-                    Students = Students.Where(s => s.AdmissionNo == i);
-                    if (Students.Count() == 0)
-                    {
-                        ViewBag.notfound = "Admission Number " + i + " Not Found";
-                    }
-                }
-
-                else if (!String.IsNullOrEmpty(searchString))
-                {
-                    searchString=searchString.ToLower();
-
-                    Students = Students.Where(s=>s.StudentName.ToLower().Contains(searchString) ||
-                                s.Address.ToLower().Contains(searchString) || s.SelectedCourse.ToLower().Contains(searchString) ||
-                                s.DateOfBirth.ToString().Contains(searchString));
-                    if (Students.Count() == 0)
-                    {
-                        ViewBag.notfound = "Please enter valid information";
-                    }
-                }
-
-                switch (sortOrder)
-                {
-                    case "Name_desc":
-                        Students = Students.OrderByDescending(s => s.StudentName);
-                        break;
-                    case "Address":
-                        Students = Students.OrderBy(s => s.Address);
-                        break;
-                    case "Address_desc":
-                        Students = Students.OrderByDescending(s => s.Address);
-                        break;
-                    default:
-                        Students = Students.OrderBy(s => s.StudentName);
-                        break;
-                }
-
-
-                if (Students != null)
-                {
-                    var StudentsDTO = _map.Map<IEnumerable<StudentDTO>>(Students);
-                    int recordCount = StudentsDTO.Count();
-                    var paging = new Paging(recordCount, pg, pagesizeinput);
+   
+                    var paging = new Paging(studentsCount, pg, pagesizeinput);
                     int recSkip = (pg - 1) * pagesizeinput;
-                    var data = StudentsDTO.Skip(recSkip).Take(paging.PageSize).ToList();
+                    data = await _service.GetSpecificData(recSkip, paging.PageSize);
+
                     this.ViewBag.Pager = paging;
-                    return View(data);
+
                 }
                 else
                 {
-                    return View();
+                    
+                     var students = _map.Map<IEnumerable<StudentDTO>>(await _service.GetAll());
+                    return View(students);
                 }
-                
+
+
+
+                if (!String.IsNullOrEmpty(searchString) && int.TryParse(searchString, out int i))
+                {
+                    var totalData = data;
+                    var student = await _service.GetAll(s => s.AdmissionNo == i);
+                    if (student.Count() == 0)
+                    {
+                        ViewBag.notfound = "Admission Number " + i + " Not Found";
+                        var datDTO = _map.Map<IEnumerable<StudentDTO>>(totalData);
+                        return View(datDTO);
+                    }
+                    IEnumerable<StudentDTO> studentDTO = _map.Map<IEnumerable<StudentDTO>>(student);
+                    return View(studentDTO);
+                }
+                else if (!String.IsNullOrEmpty(searchString))
+                {
+                    var totalData = data;
+                    searchString =searchString.ToLower();
+
+                    data = await _service.GetAll(s => s.StudentName.ToLower().Contains(searchString) ||
+                                s.Address.ToLower().Contains(searchString) || s.SelectedCourse.ToLower().Contains(searchString) ||
+                                s.DateOfBirth.ToString().Contains(searchString));
+                   
+                    int dataCount = data.Count();
+                    if (dataCount == 0)
+                    {
+                        ViewBag.notfound = "Please enter valid information";
+                        return View(totalData);
+                    }
+
+                    if (dataCount > 0)
+                    {
+                        
+                        var paging = new Paging(dataCount, pg, pagesizeinput);
+                        int recSkip = (pg - 1) * pagesizeinput;
+                        data = data.Skip(recSkip).Take(paging.PageSize).ToList();
+                        this.ViewBag.Pager = paging;
+                        IEnumerable<StudentDTO> studentDTO = _map.Map<IEnumerable<StudentDTO>>(data);
+                        return View(studentDTO);
+                    }
+                }
+                switch (sortOrder)
+                {
+                    
+                    case "Name_desc":
+
+                        data = data.OrderByDescending(s => s.StudentName);
+                        
+                        break;
+                    case "Address":
+
+                        data = data.OrderBy(s => s.Address);
+                        break;
+                    case "Address_desc":
+
+                        data = data.OrderByDescending(s => s.Address);
+                        break;
+                    default:
+
+                        data = data.OrderBy(s => s.StudentName);
+                        break;
+                }
+                var finalDTO = _map.Map<IEnumerable<StudentDTO>>(data);
+                return View(finalDTO);
+
             }
             catch (Exception e)
             {
@@ -112,6 +140,8 @@ namespace StudentRegistration.Controllers
 
                 return NotFound();
             }
+
+            return View();
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -381,7 +411,7 @@ namespace StudentRegistration.Controllers
         {
 
 
-            string[] ids = formCollection["selectedStudents"];
+            string[] ids = formCollection["studentId"];
 
             foreach (string id in ids)
             {
